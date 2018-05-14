@@ -4,6 +4,8 @@ A tracing example to show how it works [Kubernetes](https://kubernetes.io) and [
 
 This example shows how the tracing acts in different endpoints and can be traced on each of the services using proxies.
 
+![multiple-trace](screenshots/multiple.png)
+
 ## Componentes
 
 * [skipper](https://github.com/zalando/skipper) (with [opentracing plugin](https://github.com/skipper-plugins/opentracing)) for sidecard proxyies
