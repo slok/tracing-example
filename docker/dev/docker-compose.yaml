@@ -1,0 +1,82 @@
+version: '3'
+services:
+  # Service a + proxy sidecar
+  servicea:
+    build:
+      context: ../../
+      dockerfile: docker/prod/Dockerfile
+    network_mode: "host"
+    depends_on:
+      - jaeger
+    command: 
+      - --service-name=service-a
+      - --listen-address=:8080
+      - --endpoint=http://127.0.0.1:9091
+      - --endpoint=http://127.0.0.1:9092
+
+  sidecar-servicea:
+    image: quay.io/slok/skipper:latest
+    network_mode: "host"
+    command:
+      - --opentracing
+      - "tracing_jaeger sampler-type=const"
+      - "--inline-routes" 
+      - 'all: * -> "http://127.0.0.1:8080"'
+      - --address
+      - :9090
+
+  # Service b + proxy sidecar
+  serviceb:
+    build:
+      context: ../../
+      dockerfile: docker/prod/Dockerfile
+    network_mode: "host"
+    depends_on:
+      - jaeger
+    command: 
+      - --service-name=service-b
+      - --listen-address=:8081
+      - --endpoint=http://127.0.0.1:9090
+      - --endpoint=http://127.0.0.1:9092
+
+  sidecar-serviceb:
+    image: quay.io/slok/skipper:latest
+    network_mode: "host"
+    command:
+      - --opentracing
+      - "tracing_jaeger sampler-type=const"
+      - "--inline-routes" 
+      - 'all: * -> "http://127.0.0.1:8081"'
+      - --address
+      - :9091
+
+  # Service c + proxy sidecar
+  servicec:
+    build:
+      context: ../../
+      dockerfile: docker/prod/Dockerfile
+    network_mode: "host"
+    depends_on:
+      - jaeger
+    command: 
+      - --service-name=service-c
+      - --listen-address=:8082
+      - --endpoint=http://127.0.0.1:9090
+      - --endpoint=http://127.0.0.1:9091
+
+  sidecar-servicec:
+    image: quay.io/slok/skipper:latest
+    network_mode: "host"
+    command:
+      - --opentracing
+      - "tracing_jaeger sampler-type=const"
+      - "--inline-routes" 
+      - 'all: * -> "http://127.0.0.1:8082"'
+      - --address
+      - :9092
+
+
+  # Jaeger.
+  jaeger:
+    image: jaegertracing/all-in-one:0.8.0
+    network_mode: "host"
