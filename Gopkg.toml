@@ -1,0 +1,15 @@
+[[constraint]]
+  name = "github.com/opentracing/opentracing-go"
+  version = "1.0.2"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.5"
+
+[[constraint]]
+  name = "github.com/uber/jaeger-client-go"
+  version = "2.14.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true
