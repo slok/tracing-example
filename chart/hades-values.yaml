@@ -6,9 +6,27 @@ jaeger:
     annotations:
       kubernetes.io/ingress.class: core
 
+exampleApp:
+  app:
+    resources:
+      limits:
+        cpu: 20m
+        memory: 50Mi
+      requests:
+        cpu: 5m
+        memory: 5Mi
+  proxy:
+    resources:
+      limits:
+        cpu: 20m
+        memory: 70Mi
+      requests:
+        cpu: 5m
+        memory: 15Mi
+
 apps:
   - name: service-one
-    replicaCount: 2
+    replicaCount: 6
     ingress:
       enabled: true
       hosts: 
@@ -16,14 +34,22 @@ apps:
       annotations:
         kubernetes.io/ingress.class: core
   - name: service-two
-    replicaCount: 3
+    replicaCount: 2
     ingress:
       enabled: false
   - name: service-three
-    replicaCount: 1
+    replicaCount: 2
     ingress:
       enabled: false
   - name: service-four
+    replicaCount: 2
+    ingress:
+      enabled: false
+  - name: service-five
+    replicaCount: 2
+    ingress:
+      enabled: false
+  - name: service-six
     replicaCount: 2
     ingress:
       enabled: false

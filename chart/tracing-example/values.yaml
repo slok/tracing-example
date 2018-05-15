@@ -1,10 +1,7 @@
 
-appImage: quay.io/slok/tracing-example:latest
-proxyImage: quay.io/slok/skipper:latest
 
 jaeger:
   collectorService: tracing-example-jaeger-collector.svc
-  agentImage: jaegertracing/jaeger-agent
   allInOneImage: jaegertracing/all-in-one
   uiIngress:
     enabled: false
@@ -15,6 +12,34 @@ jaeger:
     # annotations:
     #   name: value
 
+exampleApp:
+  app:
+    image: quay.io/slok/tracing-example:latest
+    resources:
+      limits:
+        cpu: 20m
+        memory: 20Mi
+      requests:
+        cpu: 5m
+        memory: 5Mi
+  proxy:
+    image: quay.io/slok/skipper:latest
+    resources:
+      limits:
+        cpu: 20m
+        memory: 40Mi
+      requests:
+        cpu: 5m
+        memory: 15Mi
+  jaegerAgent:
+    image: jaegertracing/jaeger-agent
+    resources:
+      limits:
+        cpu: 20m
+        memory: 20Mi
+      requests:
+        cpu: 5m
+        memory: 5Mi
 
 apps:
   - name: service-one

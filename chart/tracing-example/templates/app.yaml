@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: tracing-example
-          image: "{{ $root.Values.appImage }}"
+          image: "{{ $root.Values.exampleApp.app.image }}"
           ports:
             - name: http
               containerPort: 8080
@@ -45,14 +45,9 @@ spec:
               path: /operation/fast-end
               port: http
           resources:
-            limits:
-              cpu: 20m
-              memory: 20Mi
-            requests:
-              cpu: 5m
-              memory: 5Mi
+{{ toYaml $root.Values.exampleApp.app.resources | indent 10 }}
         - name: skipper-proxy
-          image: "{{ $root.Values.proxyImage }}"
+          image: "{{ $root.Values.exampleApp.proxy.image }}"
           ports:
             - name: http-proxy
               containerPort: 9090
@@ -75,14 +70,9 @@ spec:
               path: /operation/fast-end
               port: http-proxy
           resources:
-            limits:
-              cpu: 20m
-              memory: 20Mi
-            requests:
-              cpu: 5m
-              memory: 5Mi
+{{ toYaml $root.Values.exampleApp.proxy.resources | indent 10 }}
         - name: jaeger-agent
-          image: {{ $root.Values.jaeger.agentImage }}
+          image: {{ $root.Values.exampleApp.jaegerAgent.image }}
           ports:
             - containerPort: 5775
               protocol: UDP
@@ -95,13 +85,7 @@ spec:
             - "/go/bin/agent-linux"
             - "--collector.host-port={{ $root.Release.Name }}-jaeger-collector.{{ $root.Release.Namespace }}.svc.cluster.local:14267"
           resources:
-            limits:
-              cpu: 20m
-              memory: 20Mi
-            requests:
-              cpu: 5m
-              memory: 5Mi
-
+{{ toYaml $root.Values.exampleApp.jaegerAgent.resources | indent 10 }}
 
 ---
 apiVersion: v1
