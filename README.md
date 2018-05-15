@@ -51,4 +51,4 @@ echo -e "GET http://localhost:9090/operation/single-call\nGET http://localhost:9
 
 ## Run on Kubernetes
 
-TODO.
+There is a deployment chart with all the example on [chart](chart/) directory(the deployed Jaeger is in development mode, not a production ready one).
