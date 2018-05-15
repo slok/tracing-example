@@ -1,0 +1,29 @@
+jaeger:
+  uiIngress:
+    enabled: true
+    hosts: 
+      - jaeger.hades.k8s.dev.spotahome.net
+    annotations:
+      kubernetes.io/ingress.class: core
+
+apps:
+  - name: service-one
+    replicaCount: 2
+    ingress:
+      enabled: true
+      hosts: 
+        - tracing-example.hades.k8s.dev.spotahome.net
+      annotations:
+        kubernetes.io/ingress.class: core
+  - name: service-two
+    replicaCount: 3
+    ingress:
+      enabled: false
+  - name: service-three
+    replicaCount: 1
+    ingress:
+      enabled: false
+  - name: service-four
+    replicaCount: 2
+    ingress:
+      enabled: false

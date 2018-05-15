@@ -1,0 +1,49 @@
+
+appImage: quay.io/slok/tracing-example:latest
+proxyImage: quay.io/slok/skipper:latest
+
+jaeger:
+  collectorService: tracing-example-jaeger-collector.svc
+  agentImage: jaegertracing/jaeger-agent
+  allInOneImage: jaegertracing/all-in-one
+  uiIngress:
+    enabled: false
+    hosts: []
+    # Add TLS configuration
+    # tls: <TLS_CONFIG>
+    # Add custom annotations
+    # annotations:
+    #   name: value
+
+
+apps:
+  - name: service-one
+    replicaCount: 1
+    ingress:
+      enabled: false
+      hosts: []
+      # Add TLS configuration
+      # tls: <TLS_CONFIG>
+      # Add custom annotations
+      # annotations:
+      #   name: value
+  - name: service-two
+    replicaCount: 2
+    ingress:
+      enabled: false
+      hosts: []
+      # Add TLS configuration
+      # tls: <TLS_CONFIG>
+      # Add custom annotations
+      # annotations:
+      #   name: value
+  - name: service-three
+    replicaCount: 1
+    ingress:
+      enabled: false
+      hosts: []
+      # Add TLS configuration
+      # tls: <TLS_CONFIG>
+      # Add custom annotations
+      # annotations:
+      #   name: value

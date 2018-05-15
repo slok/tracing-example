@@ -1,0 +1,160 @@
+{{- $root := . -}}
+{{ range .Values.apps }}
+
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ $root.Release.Name }}-{{ .name }}
+  labels:
+    release: {{ $root.Release.Name }}
+    chart: {{ printf "%s-%s" $root.Chart.Name $root.Chart.Version | quote }}
+    heritage: {{ $root.Release.Service | quote }}
+    app: {{ .name }}
+spec:
+  replicas: {{ .replicaCount }}
+  selector:
+    matchLabels:
+      release: {{ $root.Release.Name }}
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        release: {{ $root.Release.Name }}
+        app: {{ .name }}
+    spec:
+      containers:
+        - name: tracing-example
+          image: "{{ $root.Values.appImage }}"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          args:
+            - --service-name={{ .name }}
+            - --listen-address=:8080
+            {{ range $root.Values.apps }}
+            - --endpoint=http://{{ $root.Release.Name }}-{{ .name }}.{{ $root.Release.Namespace }}.svc.cluster.local:9090
+            {{ end}}
+          livenessProbe:
+            httpGet:
+              path: /operation/fast-end
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /operation/fast-end
+              port: http
+          resources:
+            limits:
+              cpu: 20m
+              memory: 20Mi
+            requests:
+              cpu: 5m
+              memory: 5Mi
+        - name: skipper-proxy
+          image: "{{ $root.Values.proxyImage }}"
+          ports:
+            - name: http-proxy
+              containerPort: 9090
+              protocol: TCP
+          args:
+            - --opentracing
+            - "tracing_jaeger sampler-type=const"
+            - "--inline-routes" 
+            - 'all: * -> "http://localhost:8080"'
+            - "-address"
+            - ":9090"
+            - "-proxy-preserve-host"
+            - "-access-log-json-enabled"
+          livenessProbe:
+            httpGet:
+              path: /operation/fast-end
+              port: http-proxy
+          readinessProbe:
+            httpGet:
+              path: /operation/fast-end
+              port: http-proxy
+          resources:
+            limits:
+              cpu: 20m
+              memory: 20Mi
+            requests:
+              cpu: 5m
+              memory: 5Mi
+        - name: jaeger-agent
+          image: {{ $root.Values.jaeger.agentImage }}
+          ports:
+            - containerPort: 5775
+              protocol: UDP
+            - containerPort: 5778
+            - containerPort: 6831
+              protocol: UDP
+            - containerPort: 6832
+              protocol: UDP
+          command:
+            - "/go/bin/agent-linux"
+            - "--collector.host-port={{ $root.Release.Name }}-jaeger-collector.{{ $root.Release.Namespace }}.svc.cluster.local:14267"
+          resources:
+            limits:
+              cpu: 20m
+              memory: 20Mi
+            requests:
+              cpu: 5m
+              memory: 5Mi
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $root.Release.Name }}-{{ .name }}
+  labels:
+    release: {{ $root.Release.Name }}
+    chart: {{ printf "%s-%s" $root.Chart.Name $root.Chart.Version | quote }}
+    heritage: {{ $root.Release.Service | quote }}
+    app: {{ .name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9090
+      targetPort: http-proxy
+      protocol: TCP
+      name: http
+  selector:
+    release: {{ $root.Release.Name }}
+    app: {{ .name }}
+
+---
+{{- if .ingress.enabled -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ $root.Release.Name }}-{{ .name }}
+  labels:
+    release: {{ $root.Release.Name }}
+    chart: {{ printf "%s-%s" $root.Chart.Name $root.Chart.Version | quote }}
+    heritage: {{ $root.Release.Service | quote }}
+    app: {{ .name }}    
+  annotations:
+    {{- range $key, $value :=  .ingress.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  rules:
+    {{ $serviceName := printf "%s-%s" $root.Release.Name .name }}
+    {{- range $host :=  .ingress.hosts }}
+    - host: {{ $host }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: 9090
+    {{- end -}}
+  {{- if .ingress.tls }}
+  tls:
+{{ toYaml .ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}
+
+{{ end }}
