@@ -78,5 +78,5 @@ services:
 
   # Jaeger.
   jaeger:
-    image: jaegertracing/all-in-one:0.8.0
+    image: jaegertracing/all-in-one:latest
     network_mode: "host"
