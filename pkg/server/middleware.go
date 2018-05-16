@@ -16,13 +16,18 @@ func (s *server) middlewareLogger(next http.HandlerFunc) http.HandlerFunc {
 
 func (s *server) middlewareTrace(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		iw := &responseWriterInterceptor{
+			ResponseWriter: w,
+			status:         http.StatusOK,
+		}
+
 		// Get context from ingress request.
 		spCtx, err := s.tracer.Extract(
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(r.Header))
 		if err != nil {
 			s.logger.Warnf("no tracing on headers")
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(iw, r)
 		}
 
 		// Create a new span.
@@ -30,14 +35,20 @@ func (s *server) middlewareTrace(next http.HandlerFunc) http.HandlerFunc {
 		defer span.Finish()
 		// Set the final result after executing all the request chain.
 		defer func(start time.Time) {
+			span.SetTag("span.kind", "server")
+			span.SetTag("http.method", r.Method)
+			span.SetTag("http.status_code", iw.status)
+			span.SetTag("http.url", r.URL)
+			span.SetTag("app.layer", "middleware")
+
 			span.LogKV(
 				"remote_addr", r.RemoteAddr,
 				"method", r.Method,
 				"url", r.URL,
 				"content_length", r.ContentLength,
-				//"status_code", w.code,
-				//"status_text", http.StatusText(w.code),
-				//"response_size", w.count,
+				"status_code", iw.status,
+				"status_text", http.StatusText(iw.status),
+				"response_size", iw.size,
 				"took", time.Since(start).String(),
 				"sec", time.Since(start).Seconds(),
 			)
@@ -46,6 +57,6 @@ func (s *server) middlewareTrace(next http.HandlerFunc) http.HandlerFunc {
 		// update request context for the new ones.
 		ctx := opentracing.ContextWithSpan(r.Context(), span)
 		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(iw, r)
 	})
 }

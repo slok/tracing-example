@@ -43,7 +43,7 @@ endif
 # Run the development environment in non-daemonized mode (foreground)
 dev: deps-development
 	cd $(DEV_DIR) && \
-	( docker-compose -p $(SERVICE_NAME) up; \
+	( docker-compose -p $(SERVICE_NAME) up --force-recreate --build; \
 		docker-compose -p $(SERVICE_NAME) stop; \
 		docker-compose -p $(SERVICE_NAME) rm -f; )
 
